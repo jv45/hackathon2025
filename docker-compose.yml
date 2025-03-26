@@ -1,0 +1,27 @@
+version: '3'
+services:
+  dummy-app:
+    build: .
+    container_name: flask_app_container_new  # Changed container name
+    ports:
+      - "5000:5000"  # Change if needed
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:9090 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ai-agent:
+    build: ./prom_poll_agent  # NEW: Build AI Agent from its own folder
+    container_name: prom-ai-agent
+    depends_on:
+      prometheus:
+        condition: service_healthy
